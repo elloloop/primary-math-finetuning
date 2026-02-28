@@ -27,8 +27,28 @@ TRAINING_ARGS = {
 }
 
 PHASES = {
-    1: {"name": "Foundation", "dataset_size": 20000, "learning_rate": 2e-4, "epochs": 3},
-    2: {"name": "Expansion", "dataset_size": 50000, "learning_rate": 1.5e-4, "epochs": 3},
-    3: {"name": "Optimization", "dataset_size": 80000, "learning_rate": 1e-4, "epochs": 3},
-    4: {"name": "Fine-tuning", "dataset_size": 10000, "learning_rate": 5e-5, "epochs": 2},
+    1: {
+        "name": "Foundation",
+        "dataset_size": 20000,
+        "learning_rate": 2e-4,
+        "epochs": 3,
+    },
+    2: {
+        "name": "Expansion",
+        "dataset_size": 50000,
+        "learning_rate": 1.5e-4,
+        "epochs": 3,
+    },
+    3: {
+        "name": "Optimization",
+        "dataset_size": 80000,
+        "learning_rate": 1e-4,
+        "epochs": 3,
+    },
+    4: {
+        "name": "Fine-tuning",
+        "dataset_size": 10000,
+        "learning_rate": 5e-5,
+        "epochs": 2,
+    },
 }

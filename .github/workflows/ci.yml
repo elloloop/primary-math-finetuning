@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install black==23.12.1 flake8==7.0.0
+
+      - name: Check formatting
+        run: black --check --diff src/ scripts/ config/ tests/
+
+      - name: Lint
+        run: flake8 src/ scripts/ config/ tests/ --max-line-length 120 --ignore E203,W503,E402
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers peft accelerate trl
+          pip install pytest==7.4.3 jsonschema==4.21.1
+          pip install datasets pandas numpy jsonlines
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
