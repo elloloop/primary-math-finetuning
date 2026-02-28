@@ -2,7 +2,7 @@ name: Train on RunPod
 
 on:
   workflow_run:
-    workflows: ["Build and Push Docker Image to GHCR"]
+    workflows: ["CI"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
