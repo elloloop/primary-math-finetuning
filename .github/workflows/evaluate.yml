@@ -1,0 +1,78 @@
+name: Evaluate Model Accuracy
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_path:
+        description: "HuggingFace model path or run ID to evaluate"
+        required: true
+      retrain_if_below_100:
+        description: "Trigger retraining if accuracy is below 100%"
+        required: false
+        default: "true"
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install transformers torch datasets peft huggingface-hub
+
+      - name: Run evaluation
+        id: eval
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          MODEL_PATH: ${{ inputs.model_path }}
+        run: |
+          python evaluate.py --model-path "$MODEL_PATH" --output-json results.json
+          ACCURACY=$(python -c "import json; print(json.load(open('results.json'))['accuracy'])")
+          echo "accuracy=$ACCURACY" >> "$GITHUB_OUTPUT"
+          echo "Model accuracy: ${ACCURACY}%"
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-results
+          path: results.json
+
+      - name: Check if retraining needed
+        if: ${{ inputs.retrain_if_below_100 == 'true' }}
+        env:
+          ACCURACY: ${{ steps.eval.outputs.accuracy }}
+        run: |
+          if [ "$(echo "$ACCURACY < 100" | bc -l)" -eq 1 ]; then
+            echo "Accuracy is ${ACCURACY}%, below 100%. Triggering retraining."
+            echo "NEEDS_RETRAIN=true" >> "$GITHUB_ENV"
+          else
+            echo "Accuracy is 100%. No retraining needed."
+            echo "NEEDS_RETRAIN=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Trigger retraining
+        if: env.NEEDS_RETRAIN == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'train-runpod.yml',
+              ref: 'main',
+              inputs: {
+                max_iterations: '10',
+              }
+            });
+            console.log('Retraining workflow dispatched.');
