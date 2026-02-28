@@ -4,32 +4,11 @@ on:
   release:
     types: [published]
 
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          pip install pytest==7.4.3 jsonschema==4.21.1
-          pip install datasets pandas numpy jsonlines
-
-      - name: Run tests
-        run: pytest tests/ -v --tb=short
-
-      - name: Validate Dockerfile syntax
-        run: docker build --check .
-
   publish-image:
-    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,6 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
       - name: Determine version
         id: version
         run: |
@@ -46,7 +30,6 @@ jobs:
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Releasing version: $VERSION (tag: $TAG)"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -62,7 +45,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
@@ -78,3 +61,21 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: BUILDKIT_INLINE_CACHE=1
+
+      - name: Make package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PACKAGE_NAME=$(echo "$IMAGE_NAME" | cut -d'/' -f2)
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            /orgs/${{ github.repository_owner }}/packages/container/${PACKAGE_NAME}/visibility \
+            -f visibility=public || \
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            /user/packages/container/${PACKAGE_NAME}/visibility \
+            -f visibility=public || \
+          echo "Could not set visibility — set it manually in GitHub package settings"

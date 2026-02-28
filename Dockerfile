@@ -11,9 +11,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-COPY . .
+
+# Install Python deps first (cached unless requirements change)
+# torch is already in the base image — don't reinstall
+COPY requirements-docker.txt .
+RUN pip install --no-cache-dir -r requirements-docker.txt
+
+# Copy source code (changes frequently — keep last)
+COPY config/ config/
+COPY src/ src/
+COPY scripts/ scripts/
+COPY data/examples/ data/examples/
+COPY runpod_startup.sh setup.py ./
+
 RUN chmod +x runpod_startup.sh
 
 EXPOSE 6006 8888
