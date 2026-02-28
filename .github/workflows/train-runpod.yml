@@ -2,19 +2,18 @@ name: Train on RunPod
 
 on:
   workflow_run:
-    workflows: ["Build and Push Docker Image to GHCR"]
+    workflows: ["Release"]
     types: [completed]
-    branches: [main]
   workflow_dispatch:
     inputs:
       max_iterations:
-        description: "Maximum training iterations to reach 100% accuracy"
+        description: "Maximum training iterations to reach target accuracy"
         required: false
         default: "10"
       gpu_type:
         description: "RunPod GPU type"
         required: false
-        default: "NVIDIA RTX A5000"
+        default: "NVIDIA A40"
       cloud_type:
         description: "RunPod cloud type (COMMUNITY or SECURE)"
         required: false
@@ -40,7 +39,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.10"
 
       - name: Install RunPod CLI dependencies
         run: pip install runpod requests
@@ -51,7 +50,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
           MAX_ITERATIONS: ${{ inputs.max_iterations || '10' }}
-          GPU_TYPE: ${{ inputs.gpu_type || 'NVIDIA RTX A5000' }}
+          GPU_TYPE: ${{ inputs.gpu_type || 'NVIDIA A40' }}
           CLOUD_TYPE: ${{ inputs.cloud_type || 'COMMUNITY' }}
         run: python .github/scripts/launch_runpod.py
 

@@ -1,0 +1,47 @@
+[
+  {
+    "question": "Sarah has 48 apples. She gives 15 apples to her friend and buys 23 more. How many apples does Sarah have now?",
+    "choices": ["56", "66", "46", "76"],
+    "answer": "A",
+    "explanation": "48 - 15 = 33, then 33 + 23 = 56",
+    "difficulty": "medium",
+    "category": "mixed",
+    "metadata": {"source": "synthetic", "num_steps": 2}
+  },
+  {
+    "question": "A classroom has 32 students. If 8 students are absent, how many students are present?",
+    "choices": ["24", "26", "22", "40"],
+    "answer": "A",
+    "explanation": "32 - 8 = 24",
+    "difficulty": "easy",
+    "category": "subtraction",
+    "metadata": {"source": "synthetic", "num_steps": 1}
+  },
+  {
+    "question": "Tom buys 6 packs of pencils. Each pack has 12 pencils. How many pencils does Tom have in total?",
+    "choices": ["62", "18", "72", "66"],
+    "answer": "C",
+    "explanation": "6 * 12 = 72",
+    "difficulty": "easy",
+    "category": "multiplication",
+    "metadata": {"source": "synthetic", "num_steps": 1}
+  },
+  {
+    "question": "A baker made 144 cookies and wants to divide them equally into 12 boxes. How many cookies go in each box?",
+    "choices": ["14", "11", "12", "13"],
+    "answer": "C",
+    "explanation": "144 / 12 = 12",
+    "difficulty": "easy",
+    "category": "division",
+    "metadata": {"source": "synthetic", "num_steps": 1}
+  },
+  {
+    "question": "Maya has $50. She buys a book for $12 and a notebook for $7. She then earns $15 from babysitting. How much money does Maya have now?",
+    "choices": ["$46", "$36", "$56", "$41"],
+    "answer": "A",
+    "explanation": "50 - 12 = 38, 38 - 7 = 31, 31 + 15 = 46",
+    "difficulty": "hard",
+    "category": "mixed",
+    "metadata": {"source": "synthetic", "num_steps": 3}
+  }
+]

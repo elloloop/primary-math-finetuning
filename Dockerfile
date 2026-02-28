@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
+FROM pytorch/pytorch:2.1.2-cuda12.1-cudnn8-runtime
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -7,8 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     HF_HOME=/workspace/cache
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-venv git curl ca-certificates && \
-    ln -sf /usr/bin/python3 /usr/bin/python && \
+    git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
