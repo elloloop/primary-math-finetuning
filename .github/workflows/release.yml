@@ -13,6 +13,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      image_url: ${{ steps.summary.outputs.image_url }}
 
     steps:
       - name: Checkout
@@ -53,6 +55,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -79,3 +82,10 @@ jobs:
             /user/packages/container/${PACKAGE_NAME}/visibility \
             -f visibility=public || \
           echo "Could not set visibility — set it manually in GitHub package settings"
+
+      - name: Output image URL
+        id: summary
+        run: |
+          IMAGE_URL="ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
+          echo "image_url=${IMAGE_URL}" >> "$GITHUB_OUTPUT"
+          echo "Image URL: ${IMAGE_URL}"
