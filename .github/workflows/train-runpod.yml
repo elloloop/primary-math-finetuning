@@ -1,0 +1,62 @@
+name: Train on RunPod
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Image to GHCR"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      max_iterations:
+        description: "Maximum training iterations to reach 100% accuracy"
+        required: false
+        default: "10"
+      gpu_type:
+        description: "RunPod GPU type"
+        required: false
+        default: "NVIDIA RTX A5000"
+      cloud_type:
+        description: "RunPod cloud type (COMMUNITY or SECURE)"
+        required: false
+        default: "COMMUNITY"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install RunPod CLI dependencies
+        run: pip install runpod requests
+
+      - name: Launch RunPod training pod
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+          MAX_ITERATIONS: ${{ inputs.max_iterations || '10' }}
+          GPU_TYPE: ${{ inputs.gpu_type || 'NVIDIA RTX A5000' }}
+          CLOUD_TYPE: ${{ inputs.cloud_type || 'COMMUNITY' }}
+        run: python .github/scripts/launch_runpod.py
+
+      - name: Wait for training to complete
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: python .github/scripts/poll_runpod.py
+        timeout-minutes: 360
