@@ -104,9 +104,7 @@ class GSM8KEvaluator(BaseEvaluator):
         **kwargs: Additional keyword arguments forwarded to ``BaseEvaluator``.
     """
 
-    _GSM8K_ANSWER_PATTERN: re.Pattern[str] = re.compile(
-        r"####\s*(-?\d[\d,]*\.?\d*)"
-    )
+    _GSM8K_ANSWER_PATTERN: re.Pattern[str] = re.compile(r"####\s*(-?\d[\d,]*\.?\d*)")
 
     def __init__(
         self,

@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Fine-tune a causal LM on primary-math data using LoRA.",
@@ -59,20 +60,45 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Training phase (1-4). Each phase uses a different LR / epoch schedule.",
     )
-    p.add_argument("--num_epochs", type=int, default=None, help="Override number of training epochs.")
-    p.add_argument("--batch_size", type=int, default=None, help="Per-device train and eval batch size.")
-    p.add_argument("--learning_rate", type=float, default=None, help="Override learning rate.")
+    p.add_argument(
+        "--num_epochs",
+        type=int,
+        default=None,
+        help="Override number of training epochs.",
+    )
+    p.add_argument(
+        "--batch_size",
+        type=int,
+        default=None,
+        help="Per-device train and eval batch size.",
+    )
+    p.add_argument(
+        "--learning_rate", type=float, default=None, help="Override learning rate."
+    )
     p.add_argument("--lora_r", type=int, default=None, help="LoRA rank (r).")
-    p.add_argument("--max_seq_length", type=int, default=None, help="Maximum sequence length.")
-    p.add_argument("--use_wandb", action="store_true", help="Enable Weights & Biases logging.")
-    p.add_argument("--resume_from_checkpoint", default=None, help="Path to checkpoint directory to resume from.")
-    p.add_argument("--quick_test", action="store_true", help="Use a tiny subset for a fast sanity check.")
+    p.add_argument(
+        "--max_seq_length", type=int, default=None, help="Maximum sequence length."
+    )
+    p.add_argument(
+        "--use_wandb", action="store_true", help="Enable Weights & Biases logging."
+    )
+    p.add_argument(
+        "--resume_from_checkpoint",
+        default=None,
+        help="Path to checkpoint directory to resume from.",
+    )
+    p.add_argument(
+        "--quick_test",
+        action="store_true",
+        help="Use a tiny subset for a fast sanity check.",
+    )
     return p.parse_args()
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     args = parse_args()

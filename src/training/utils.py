@@ -2,8 +2,7 @@
 
 import logging
 import math
-import time
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -76,7 +75,9 @@ def compute_metrics(eval_pred) -> dict[str, float]:
     return {"accuracy": accuracy, "perplexity": perplexity}
 
 
-def get_training_args(output_dir: str, phase: int = 1, **overrides: Any) -> TrainingArguments:
+def get_training_args(
+    output_dir: str, phase: int = 1, **overrides: Any
+) -> TrainingArguments:
     """Build a ``TrainingArguments`` instance from config with phase-specific settings.
 
     Starts from the base ``TRAINING_ARGS`` dict defined in
@@ -154,7 +155,7 @@ def check_gpu_availability() -> dict[str, Any]:
 
     for i in range(info["device_count"]):
         props = torch.cuda.get_device_properties(i)
-        vram_gb = props.total_mem / (1024 ** 3)
+        vram_gb = props.total_mem / (1024**3)
         cc = f"{props.major}.{props.minor}"
         device_info = {
             "name": props.name,
@@ -170,9 +171,11 @@ def check_gpu_availability() -> dict[str, Any]:
 
     # Current memory snapshot for first device
     if info["device_count"] > 0:
-        allocated = torch.cuda.memory_allocated(0) / (1024 ** 3)
-        reserved = torch.cuda.memory_reserved(0) / (1024 ** 3)
-        print(f"  Memory (GPU 0): {allocated:.2f} GB allocated, {reserved:.2f} GB reserved")
+        allocated = torch.cuda.memory_allocated(0) / (1024**3)
+        reserved = torch.cuda.memory_reserved(0) / (1024**3)
+        print(
+            f"  Memory (GPU 0): {allocated:.2f} GB allocated, {reserved:.2f} GB reserved"
+        )
 
     return info
 

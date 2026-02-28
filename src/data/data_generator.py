@@ -8,7 +8,7 @@ easy, medium, and hard difficulty levels.
 import json
 import logging
 import random
-from typing import Any, Literal, Optional, Union
+from typing import Any, Optional
 
 from datasets import Dataset
 
@@ -134,15 +134,48 @@ _TEMPLATES_BY_CATEGORY: dict[str, list] = {
 }
 
 _NAMES = [
-    "Emma", "Liam", "Olivia", "Noah", "Ava", "James", "Sophia", "Mason",
-    "Isabella", "Ethan", "Mia", "Lucas", "Harper", "Logan", "Amelia",
-    "Alex", "Chloe", "Daniel", "Lily", "Henry",
+    "Emma",
+    "Liam",
+    "Olivia",
+    "Noah",
+    "Ava",
+    "James",
+    "Sophia",
+    "Mason",
+    "Isabella",
+    "Ethan",
+    "Mia",
+    "Lucas",
+    "Harper",
+    "Logan",
+    "Amelia",
+    "Alex",
+    "Chloe",
+    "Daniel",
+    "Lily",
+    "Henry",
 ]
 
 _ITEMS = [
-    "apples", "books", "pencils", "cookies", "marbles", "stickers",
-    "balloons", "flowers", "candies", "oranges", "cards", "shells",
-    "stones", "buttons", "beads", "stamps", "coins", "toys", "crayons",
+    "apples",
+    "books",
+    "pencils",
+    "cookies",
+    "marbles",
+    "stickers",
+    "balloons",
+    "flowers",
+    "candies",
+    "oranges",
+    "cards",
+    "shells",
+    "stones",
+    "buttons",
+    "beads",
+    "stamps",
+    "coins",
+    "toys",
+    "crayons",
     "cupcakes",
 ]
 
@@ -380,7 +413,6 @@ def augment_gsm8k(
     """
     rng = random.Random(seed)
 
-    name_map = {name: _NAMES for name in _NAMES}
     context_swaps = {
         "apples": _ITEMS,
         "books": _ITEMS,
@@ -413,9 +445,7 @@ def augment_gsm8k(
         augmented_question = question_text
         for original_name in _NAMES:
             if original_name in augmented_question:
-                replacement = rng.choice(
-                    [n for n in _NAMES if n != original_name]
-                )
+                replacement = rng.choice([n for n in _NAMES if n != original_name])
                 augmented_question = augmented_question.replace(
                     original_name, replacement
                 )
@@ -451,7 +481,9 @@ def augment_gsm8k(
         else:
             scaled_answer = rng.randint(1, 100)
 
-        explanation = answer_text.split("####")[0].strip() if "####" in answer_text else ""
+        explanation = (
+            answer_text.split("####")[0].strip() if "####" in answer_text else ""
+        )
         explanation = f"(Adapted from GSM8K) {explanation}"
 
         distractors = generate_distractors(scaled_answer, num_distractors=3, rng=rng)

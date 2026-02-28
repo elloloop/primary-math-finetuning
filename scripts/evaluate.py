@@ -17,7 +17,10 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from src.evaluation.benchmark_runner import BenchmarkRunner
-from src.evaluation.analytics import analyze_errors, generate_error_report, print_summary
+from src.evaluation.analytics import (
+    generate_error_report,
+    print_summary,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,15 +44,33 @@ def parse_args() -> argparse.Namespace:
         choices=["gsm8k", "all"],
         help="Which benchmark(s) to run.",
     )
-    p.add_argument("--num_samples", type=int, default=None, help="Limit evaluation to N samples.")
-    p.add_argument("--num_fewshot", type=int, default=5, help="Number of few-shot exemplars.")
+    p.add_argument(
+        "--num_samples", type=int, default=None, help="Limit evaluation to N samples."
+    )
+    p.add_argument(
+        "--num_fewshot", type=int, default=5, help="Number of few-shot exemplars."
+    )
     p.add_argument("--batch_size", type=int, default=8, help="Generation batch size.")
-    p.add_argument("--output_dir", default="./outputs/results", help="Directory for result files.")
-    p.add_argument("--use_cot", action="store_true", help="Use chain-of-thought prompting.")
-    p.add_argument("--save_predictions", action="store_true", help="Save per-example predictions.")
-    p.add_argument("--error_analysis", action="store_true", help="Run error analysis on results.")
-    p.add_argument("--full", action="store_true", help="Run on the full test set (overrides --num_samples).")
-    p.add_argument("--output-json", default=None, help="Path for CI-friendly JSON output.")
+    p.add_argument(
+        "--output_dir", default="./outputs/results", help="Directory for result files."
+    )
+    p.add_argument(
+        "--use_cot", action="store_true", help="Use chain-of-thought prompting."
+    )
+    p.add_argument(
+        "--save_predictions", action="store_true", help="Save per-example predictions."
+    )
+    p.add_argument(
+        "--error_analysis", action="store_true", help="Run error analysis on results."
+    )
+    p.add_argument(
+        "--full",
+        action="store_true",
+        help="Run on the full test set (overrides --num_samples).",
+    )
+    p.add_argument(
+        "--output-json", default=None, help="Path for CI-friendly JSON output."
+    )
     return p.parse_args()
 
 
@@ -73,7 +94,11 @@ def main() -> int:
     all_results: dict = {}
 
     if args.benchmark in ("gsm8k", "all"):
-        logger.info("Running GSM8K evaluation (num_samples=%s, num_fewshot=%d)", num_samples, args.num_fewshot)
+        logger.info(
+            "Running GSM8K evaluation (num_samples=%s, num_fewshot=%d)",
+            num_samples,
+            args.num_fewshot,
+        )
         gsm8k_results = runner.run_gsm8k(
             num_samples=num_samples,
             num_fewshot=args.num_fewshot,
@@ -86,12 +111,16 @@ def main() -> int:
         if args.save_predictions:
             preds_path = output_dir / "gsm8k_predictions.json"
             with open(preds_path, "w", encoding="utf-8") as f:
-                json.dump(gsm8k_results.get("predictions", []), f, indent=2, default=str)
+                json.dump(
+                    gsm8k_results.get("predictions", []), f, indent=2, default=str
+                )
             logger.info("Predictions saved to %s", preds_path)
 
         # Error analysis
         if args.error_analysis:
-            report = generate_error_report(gsm8k_results, output_path=str(output_dir / "gsm8k_error_report.json"))
+            report = generate_error_report(
+                gsm8k_results, output_path=str(output_dir / "gsm8k_error_report.json")
+            )
             error_info = report.get("error_analysis", {})
             print("\n--- Error Analysis ---")
             print(f"  Total errors:   {error_info.get('total_errors', 0)}")

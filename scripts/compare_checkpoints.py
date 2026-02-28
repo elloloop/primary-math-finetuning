@@ -69,28 +69,33 @@ def main() -> int:
                 num_samples=args.num_samples,
                 num_fewshot=args.num_fewshot,
             )
-            results_table.append({
-                "checkpoint": ckpt_name,
-                "path": ckpt_path,
-                "accuracy": gsm8k_results["overall_accuracy"],
-                "correct": gsm8k_results["correct"],
-                "total": gsm8k_results["total_problems"],
-                "status": "ok",
-            })
+            results_table.append(
+                {
+                    "checkpoint": ckpt_name,
+                    "path": ckpt_path,
+                    "accuracy": gsm8k_results["overall_accuracy"],
+                    "correct": gsm8k_results["correct"],
+                    "total": gsm8k_results["total_problems"],
+                    "status": "ok",
+                }
+            )
         except Exception as exc:
             logger.error("Failed to evaluate %s: %s", ckpt_path, exc)
-            results_table.append({
-                "checkpoint": ckpt_name,
-                "path": ckpt_path,
-                "accuracy": None,
-                "correct": None,
-                "total": None,
-                "status": f"error: {exc}",
-            })
+            results_table.append(
+                {
+                    "checkpoint": ckpt_name,
+                    "path": ckpt_path,
+                    "accuracy": None,
+                    "correct": None,
+                    "total": None,
+                    "status": f"error: {exc}",
+                }
+            )
 
         # Free GPU memory between checkpoints
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -126,7 +131,9 @@ def main() -> int:
     valid = [r for r in results_table if r["accuracy"] is not None]
     if valid:
         best = max(valid, key=lambda r: r["accuracy"])
-        print(f"  Best checkpoint: {best['checkpoint']} (accuracy={best['accuracy']:.4f})")
+        print(
+            f"  Best checkpoint: {best['checkpoint']} (accuracy={best['accuracy']:.4f})"
+        )
         print()
 
     # ---- Optionally save JSON -------------------------------------------

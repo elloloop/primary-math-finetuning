@@ -1,9 +1,8 @@
 """Comprehensive tests for training utilities (NO actual training)."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from transformers import TrainingArguments
 
 from config.training_config import PHASES, TRAINING_ARGS
 from src.training.utils import (

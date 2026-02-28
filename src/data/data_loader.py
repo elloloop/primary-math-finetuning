@@ -7,7 +7,7 @@ with train/validation splitting functionality.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from datasets import Dataset, DatasetDict, load_dataset
 
@@ -193,9 +193,7 @@ def load_training_dataset(path: str, quick_test: bool = False) -> Dataset:
     """
     ok, errs = _validate_dataset(path)
     if not ok:
-        raise ValueError(
-            "Dataset validation failed:\n" + "\n".join(errs[:20])
-        )
+        raise ValueError("Dataset validation failed:\n" + "\n".join(errs[:20]))
 
     records = load_json_dataset(path)
     if quick_test:

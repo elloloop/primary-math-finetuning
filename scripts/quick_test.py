@@ -12,11 +12,9 @@ Steps:
     4. Report pass/fail.
 """
 
-import json
 import logging
 import os
 import sys
-import tempfile
 import time
 from pathlib import Path
 

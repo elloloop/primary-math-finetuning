@@ -2,9 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
-
-import torch
 from peft import LoraConfig, PeftModel, get_peft_model
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
@@ -29,7 +26,9 @@ def get_lora_config(
     Returns:
         Configured LoraConfig object.
     """
-    logger.info(f"Creating LoRA config: r={r}, lora_alpha={lora_alpha}, lora_dropout={lora_dropout}")
+    logger.info(
+        f"Creating LoRA config: r={r}, lora_alpha={lora_alpha}, lora_dropout={lora_dropout}"
+    )
 
     target_modules = [
         "q_proj",
@@ -78,7 +77,9 @@ def apply_lora(model: PreTrainedModel, config: LoraConfig) -> PeftModel:
         peft_model = get_peft_model(model, config)
 
         total_params = sum(p.numel() for p in peft_model.parameters())
-        trainable_params = sum(p.numel() for p in peft_model.parameters() if p.requires_grad)
+        trainable_params = sum(
+            p.numel() for p in peft_model.parameters() if p.requires_grad
+        )
         trainable_percent = 100 * trainable_params / total_params
 
         logger.info(

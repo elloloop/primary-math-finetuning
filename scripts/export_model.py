@@ -18,7 +18,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 import torch
-from peft import AutoPeftModelForCausalLM, PeftModel
+from peft import AutoPeftModelForCausalLM
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.models.lora_config import merge_and_save
@@ -53,7 +53,7 @@ def parse_args() -> argparse.Namespace:
         "--hub_repo_id",
         default=None,
         help="HuggingFace Hub repository ID (e.g. 'username/model-name'). "
-             "Required if --push_to_hub is set.",
+        "Required if --push_to_hub is set.",
     )
     p.add_argument(
         "--hub_token",

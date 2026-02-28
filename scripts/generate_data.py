@@ -79,7 +79,9 @@ def main() -> int:
     # ---- Generate synthetic problems ------------------------------------
     logger.info(
         "Generating %d problems (difficulty=%s, operations=%s)",
-        args.num_samples, args.difficulty, args.operations,
+        args.num_samples,
+        args.difficulty,
+        args.operations,
     )
     samples = generate_math_problems(
         num_samples=args.num_samples,
@@ -97,11 +99,20 @@ def main() -> int:
             logger.info("Loading GSM8K training set for augmentation...")
             gsm8k_ds = load_gsm8k(split="train")
             num_augmented = max(args.num_samples // 4, 50)
-            augmented = augment_gsm8k(gsm8k_ds, num_augmented=num_augmented, seed=args.seed)
+            augmented = augment_gsm8k(
+                gsm8k_ds, num_augmented=num_augmented, seed=args.seed
+            )
             samples.extend(augmented)
-            logger.info("Added %d augmented GSM8K samples (total: %d).", len(augmented), len(samples))
+            logger.info(
+                "Added %d augmented GSM8K samples (total: %d).",
+                len(augmented),
+                len(samples),
+            )
         except Exception as exc:
-            logger.warning("GSM8K augmentation failed, continuing with synthetic data only: %s", exc)
+            logger.warning(
+                "GSM8K augmentation failed, continuing with synthetic data only: %s",
+                exc,
+            )
 
     # ---- Save -----------------------------------------------------------
     save_samples(samples, str(output_path))

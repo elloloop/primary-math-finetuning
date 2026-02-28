@@ -6,7 +6,12 @@ import time
 from typing import Optional
 
 import torch
-from transformers import TrainerCallback, TrainerControl, TrainerState, TrainingArguments
+from transformers import (
+    TrainerCallback,
+    TrainerControl,
+    TrainerState,
+    TrainingArguments,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +34,9 @@ class GPUMemoryCallback(TrainerCallback):
         if not torch.cuda.is_available():
             return
 
-        allocated_gb = torch.cuda.memory_allocated() / (1024 ** 3)
-        reserved_gb = torch.cuda.memory_reserved() / (1024 ** 3)
-        max_allocated_gb = torch.cuda.max_memory_allocated() / (1024 ** 3)
+        allocated_gb = torch.cuda.memory_allocated() / (1024**3)
+        reserved_gb = torch.cuda.memory_reserved() / (1024**3)
+        max_allocated_gb = torch.cuda.max_memory_allocated() / (1024**3)
 
         logger.info(
             "Step %d | GPU Memory: %.2f GB allocated, %.2f GB reserved, %.2f GB peak",
@@ -95,7 +100,9 @@ class EarlyStoppingWithPatience(TrainerCallback):
 
         if self.best_value is None or current < self.best_value - self.min_delta:
             improvement = (
-                f"improved from {self.best_value:.6f}" if self.best_value is not None else "first evaluation"
+                f"improved from {self.best_value:.6f}"
+                if self.best_value is not None
+                else "first evaluation"
             )
             logger.info(
                 "EarlyStopping: %s = %.6f (%s). Resetting patience.",
@@ -108,8 +115,7 @@ class EarlyStoppingWithPatience(TrainerCallback):
         else:
             self.rounds_without_improvement += 1
             logger.info(
-                "EarlyStopping: %s = %.6f (no improvement). "
-                "Patience: %d / %d.",
+                "EarlyStopping: %s = %.6f (no improvement). " "Patience: %d / %d.",
                 self.metric_key,
                 current,
                 self.rounds_without_improvement,
@@ -152,7 +158,9 @@ class TrainingProgressCallback(TrainerCallback):
         self._train_start_time = time.time()
         self._last_log_time = time.time()
         self._last_log_step = 0
-        print(f"\nTraining started | {state.max_steps} total steps | {args.num_train_epochs} epoch(s)")
+        print(
+            f"\nTraining started | {state.max_steps} total steps | {args.num_train_epochs} epoch(s)"
+        )
         print("-" * 80)
 
     def on_log(
@@ -197,7 +205,9 @@ class TrainingProgressCallback(TrainerCallback):
         steps_delta = step - self._last_log_step
         time_delta = now - (self._last_log_time or now)
         if time_delta > 0 and steps_delta > 0:
-            effective_batch = args.per_device_train_batch_size * args.gradient_accumulation_steps
+            effective_batch = (
+                args.per_device_train_batch_size * args.gradient_accumulation_steps
+            )
             if torch.cuda.is_available():
                 effective_batch *= max(torch.cuda.device_count(), 1)
             samples_per_sec = (steps_delta * effective_batch) / time_delta

@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -10,7 +9,6 @@ from typing import Any, Optional
 import torch
 from datasets import Dataset, load_dataset
 from peft import PeftModel
-from transformers import TrainingArguments
 from trl import SFTTrainer
 
 from config.model_config import LORA_CONFIG, MODEL_CONFIG
@@ -26,7 +24,6 @@ from src.training.callbacks import (
 from src.training.utils import (
     build_data_collator,
     check_gpu_availability,
-    compute_metrics,
     estimate_training_time,
     get_training_args,
 )
@@ -194,17 +191,18 @@ class MathTrainer:
 
         train_count = len(self.train_dataset)
         eval_count = len(self.eval_dataset) if self.eval_dataset else 0
-        logger.info(
-            "Data prepared: %d train, %d eval samples", train_count, eval_count
-        )
+        logger.info("Data prepared: %d train, %d eval samples", train_count, eval_count)
 
         # Print training time estimate
-        ta = get_training_args(self.output_dir, phase=self.phase, **self.training_args_override)
+        ta = get_training_args(
+            self.output_dir, phase=self.phase, **self.training_args_override
+        )
         effective_batch = (
             ta.per_device_train_batch_size
             * ta.gradient_accumulation_steps
-            * max(torch.cuda.device_count(), 1) if torch.cuda.is_available() else
-            ta.per_device_train_batch_size * ta.gradient_accumulation_steps
+            * max(torch.cuda.device_count(), 1)
+            if torch.cuda.is_available()
+            else ta.per_device_train_batch_size * ta.gradient_accumulation_steps
         )
         estimate_training_time(
             num_samples=train_count,
@@ -250,9 +248,7 @@ class MathTrainer:
             TrainingProgressCallback(),
         ]
         if self.eval_dataset is not None:
-            callbacks.append(
-                EarlyStoppingWithPatience(patience=3, min_delta=0.001)
-            )
+            callbacks.append(EarlyStoppingWithPatience(patience=3, min_delta=0.001))
 
         logger.info(
             "Initialising SFTTrainer for phase %d (%s)",
@@ -271,11 +267,11 @@ class MathTrainer:
             max_seq_length=MODEL_CONFIG.get("max_seq_length", 2048),
         )
 
-        logger.info("Starting training (resume_from_checkpoint=%s)", resume_from_checkpoint)
+        logger.info(
+            "Starting training (resume_from_checkpoint=%s)", resume_from_checkpoint
+        )
         try:
-            result = self.trainer.train(
-                resume_from_checkpoint=resume_from_checkpoint
-            )
+            result = self.trainer.train(resume_from_checkpoint=resume_from_checkpoint)
         except torch.cuda.OutOfMemoryError as oom:
             self._handle_oom(oom)
             raise

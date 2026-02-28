@@ -60,9 +60,7 @@ def format_for_training(
     explanation = sample.get("explanation", "")
 
     if len(choices) != 4:
-        raise ValueError(
-            f"Expected exactly 4 choices, got {len(choices)}: {choices}"
-        )
+        raise ValueError(f"Expected exactly 4 choices, got {len(choices)}: {choices}")
 
     text = _CHATML_TEMPLATE.format(
         system=system_message,
@@ -102,9 +100,7 @@ def format_batch(
         try:
             formatted.append(format_for_training(sample, system_message))
         except (KeyError, ValueError) as exc:
-            raise type(exc)(
-                f"Error formatting sample at index {i}: {exc}"
-            ) from exc
+            raise type(exc)(f"Error formatting sample at index {i}: {exc}") from exc
 
     logger.info("Formatted %d samples to ChatML", len(formatted))
     return formatted

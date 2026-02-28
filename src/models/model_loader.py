@@ -1,11 +1,14 @@
 """Model loading utilities for base and fine-tuned models."""
 
 import logging
-from typing import Optional
-
 import torch
-from peft import AutoPeftModelForCausalLM, PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
+from peft import AutoPeftModelForCausalLM
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +22,9 @@ def _report_gpu_memory(label: str) -> None:
     if torch.cuda.is_available():
         allocated = torch.cuda.memory_allocated() / 1024**3
         reserved = torch.cuda.memory_reserved() / 1024**3
-        logger.info(f"{label} - GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved")
+        logger.info(
+            f"{label} - GPU Memory: {allocated:.2f}GB allocated, {reserved:.2f}GB reserved"
+        )
 
 
 def get_tokenizer(model_name: str = "Qwen/Qwen2.5-7B-Instruct") -> PreTrainedTokenizer:
@@ -91,7 +96,9 @@ def load_base_model(
             device_map=device_map,
             torch_dtype=torch_dtype,
             trust_remote_code=True,
-            attn_implementation="flash_attention_2" if torch.cuda.is_available() else None,
+            attn_implementation="flash_attention_2"
+            if torch.cuda.is_available()
+            else None,
         )
 
         _report_gpu_memory("After model loading")
@@ -149,7 +156,7 @@ def load_finetuned_model(
             logger.info("Loaded as merged/base model")
 
         _report_gpu_memory("After fine-tuned model loading")
-        logger.info(f"Fine-tuned model loaded successfully")
+        logger.info("Fine-tuned model loaded successfully")
 
         return model
 

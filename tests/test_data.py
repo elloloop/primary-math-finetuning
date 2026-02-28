@@ -1,8 +1,6 @@
 """Comprehensive tests for src/data module."""
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 from datasets import Dataset
@@ -527,14 +525,20 @@ class TestTrainValSplit:
 
     def test_train_val_split_invalid_ratio_too_small(self):
         """Test that ValueError is raised for val_ratio too small."""
-        samples = [{"question": str(i), "choices": ["1", "2", "3", "4"], "answer": "B"} for i in range(100)]
+        samples = [
+            {"question": str(i), "choices": ["1", "2", "3", "4"], "answer": "B"}
+            for i in range(100)
+        ]
 
         with pytest.raises(ValueError, match="val_ratio"):
             create_train_val_split(samples, val_ratio=0.0)
 
     def test_train_val_split_invalid_ratio_too_large(self):
         """Test that ValueError is raised for val_ratio too large."""
-        samples = [{"question": str(i), "choices": ["1", "2", "3", "4"], "answer": "B"} for i in range(100)]
+        samples = [
+            {"question": str(i), "choices": ["1", "2", "3", "4"], "answer": "B"}
+            for i in range(100)
+        ]
 
         with pytest.raises(ValueError, match="val_ratio"):
             create_train_val_split(samples, val_ratio=1.0)
@@ -550,7 +554,9 @@ class TestMathProblemGeneration:
 
     def test_generate_math_problems_basic(self):
         """Test generating 10 problems verifies they have all required fields."""
-        problems = generate_math_problems(10, difficulty="easy", operations="addition", seed=42)
+        problems = generate_math_problems(
+            10, difficulty="easy", operations="addition", seed=42
+        )
 
         assert len(problems) == 10
         for problem in problems:
@@ -576,14 +582,18 @@ class TestMathProblemGeneration:
     def test_generate_math_problems_all_operations(self):
         """Test generating problems for each operation."""
         for operation in ["addition", "subtraction", "multiplication", "division"]:
-            problems = generate_math_problems(5, difficulty="easy", operations=operation, seed=42)
+            problems = generate_math_problems(
+                5, difficulty="easy", operations=operation, seed=42
+            )
 
             assert len(problems) == 5
             assert all(p["category"] == operation for p in problems)
 
     def test_generate_math_problems_mixed(self):
         """Test generating mixed difficulty and operations."""
-        problems = generate_math_problems(20, difficulty="mixed", operations="mixed", seed=42)
+        problems = generate_math_problems(
+            20, difficulty="mixed", operations="mixed", seed=42
+        )
 
         assert len(problems) == 20
 
@@ -599,8 +609,12 @@ class TestMathProblemGeneration:
 
     def test_generate_math_problems_reproducible(self):
         """Test that generation is reproducible with same seed."""
-        problems1 = generate_math_problems(10, difficulty="easy", operations="addition", seed=42)
-        problems2 = generate_math_problems(10, difficulty="easy", operations="addition", seed=42)
+        problems1 = generate_math_problems(
+            10, difficulty="easy", operations="addition", seed=42
+        )
+        problems2 = generate_math_problems(
+            10, difficulty="easy", operations="addition", seed=42
+        )
 
         assert [p["question"] for p in problems1] == [p["question"] for p in problems2]
         assert [p["answer"] for p in problems1] == [p["answer"] for p in problems2]

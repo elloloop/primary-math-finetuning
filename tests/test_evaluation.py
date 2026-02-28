@@ -1,8 +1,6 @@
 """Comprehensive tests for evaluation utilities."""
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from src.evaluation.evaluator import BaseEvaluator
 
@@ -356,7 +354,7 @@ class TestErrorAnalysis:
         mock_tokenizer.eos_token = "<eos>"
         mock_tokenizer.eos_token_id = 2
 
-        evaluator = ConcreteEvaluator(mock_model, mock_tokenizer)
+        ConcreteEvaluator(mock_model, mock_tokenizer)
 
         assert mock_tokenizer.pad_token == "<eos>"
         assert mock_tokenizer.pad_token_id == 2

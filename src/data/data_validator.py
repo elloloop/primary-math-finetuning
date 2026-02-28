@@ -9,7 +9,7 @@ import logging
 from collections import Counter
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,9 @@ def validate_sample(sample: dict[str, Any]) -> list[str]:
     # Validate answer
     answer = sample["answer"]
     if answer not in VALID_ANSWERS:
-        errors.append(f"'answer' must be one of {sorted(VALID_ANSWERS)}, got '{answer}'")
+        errors.append(
+            f"'answer' must be one of {sorted(VALID_ANSWERS)}, got '{answer}'"
+        )
 
     # Validate optional fields
     if "explanation" in sample:
@@ -107,7 +109,9 @@ def validate_dataset(
         path = Path(samples)
         data = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(data, list):
-            return False, [f"Expected a JSON array in {path}, got {type(data).__name__}"]
+            return False, [
+                f"Expected a JSON array in {path}, got {type(data).__name__}"
+            ]
         samples = data
 
     all_errors: list[str] = []
@@ -116,7 +120,9 @@ def validate_dataset(
 
     for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
-            all_errors.append(f"Record {i}: expected a dictionary, got {type(sample).__name__}")
+            all_errors.append(
+                f"Record {i}: expected a dictionary, got {type(sample).__name__}"
+            )
             error_counts["invalid_type"] += 1
             continue
 
@@ -147,8 +153,7 @@ def validate_dataset(
         logger.info("Dataset validation passed: %d samples, 0 errors", len(samples))
     else:
         logger.warning(
-            "Dataset validation failed: %d samples, %d errors. "
-            "Breakdown: %s",
+            "Dataset validation failed: %d samples, %d errors. " "Breakdown: %s",
             len(samples),
             len(all_errors),
             dict(error_counts),
@@ -200,9 +205,7 @@ def detect_duplicates(
             similarity_threshold,
         )
     else:
-        logger.info(
-            "No near-duplicates found (threshold=%.2f)", similarity_threshold
-        )
+        logger.info("No near-duplicates found (threshold=%.2f)", similarity_threshold)
 
     return duplicates
 
