@@ -13,6 +13,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      image_url: ${{ steps.summary.outputs.image_url }}
+      tags: ${{ steps.summary.outputs.tags }}
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout
@@ -53,6 +59,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -79,3 +86,34 @@ jobs:
             /user/packages/container/${PACKAGE_NAME}/visibility \
             -f visibility=public || \
           echo "Could not set visibility — set it manually in GitHub package settings"
+
+      - name: Generate summary
+        id: summary
+        run: |
+          IMAGE_URL="ghcr.io/${{ env.IMAGE_NAME }}"
+          TAGS="${{ steps.meta.outputs.tags }}"
+          DIGEST="${{ steps.build.outputs.digest }}"
+
+          echo "image_url=${IMAGE_URL}" >> "$GITHUB_OUTPUT"
+          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<SUMMARY
+          ## Release ${{ steps.version.outputs.tag }}
+
+          ### Docker Image
+          \`\`\`
+          docker pull ${IMAGE_URL}:${{ steps.version.outputs.version }}
+          \`\`\`
+
+          ### Tags
+          $(echo "$TAGS" | tr ',' '\n' | sed 's/^/- `/' | sed 's/$/`/')
+
+          ### Digest
+          \`${DIGEST}\`
+
+          ### RunPod
+          Use this image on RunPod:
+          \`\`\`
+          ${IMAGE_URL}:${{ steps.version.outputs.version }}
+          \`\`\`
+          SUMMARY
