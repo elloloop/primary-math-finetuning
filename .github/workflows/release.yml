@@ -14,11 +14,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
       image_url: ${{ steps.summary.outputs.image_url }}
-      tags: ${{ steps.summary.outputs.tags }}
-      digest: ${{ steps.build.outputs.digest }}
 
     steps:
       - name: Checkout
@@ -87,33 +83,9 @@ jobs:
             -f visibility=public || \
           echo "Could not set visibility — set it manually in GitHub package settings"
 
-      - name: Generate summary
+      - name: Output image URL
         id: summary
         run: |
-          IMAGE_URL="ghcr.io/${{ env.IMAGE_NAME }}"
-          TAGS="${{ steps.meta.outputs.tags }}"
-          DIGEST="${{ steps.build.outputs.digest }}"
-
+          IMAGE_URL="ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
           echo "image_url=${IMAGE_URL}" >> "$GITHUB_OUTPUT"
-          echo "tags=${TAGS}" >> "$GITHUB_OUTPUT"
-
-          cat >> "$GITHUB_STEP_SUMMARY" <<SUMMARY
-          ## Release ${{ steps.version.outputs.tag }}
-
-          ### Docker Image
-          \`\`\`
-          docker pull ${IMAGE_URL}:${{ steps.version.outputs.version }}
-          \`\`\`
-
-          ### Tags
-          $(echo "$TAGS" | tr ',' '\n' | sed 's/^/- `/' | sed 's/$/`/')
-
-          ### Digest
-          \`${DIGEST}\`
-
-          ### RunPod
-          Use this image on RunPod:
-          \`\`\`
-          ${IMAGE_URL}:${{ steps.version.outputs.version }}
-          \`\`\`
-          SUMMARY
+          echo "Image URL: ${IMAGE_URL}"
