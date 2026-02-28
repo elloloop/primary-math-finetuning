@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  trainer:
+    build: .
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - TRANSFORMERS_CACHE=/workspace/cache
+      - HF_HOME=/workspace/cache
+    ports:
+      - "6006:6006"
+      - "8888:8888"
+    volumes:
+      - ./data:/workspace/data
+      - ./outputs:/workspace/outputs
+      - ./cache:/workspace/cache
+    command: ["bash", "runpod_startup.sh"]
