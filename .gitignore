@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+outputs/models/
+outputs/logs/
+outputs/results/
+outputs/visualizations/
+data/raw/
+data/processed/
+*.ipynb_checkpoints
