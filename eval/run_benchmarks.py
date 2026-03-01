@@ -43,10 +43,10 @@ def _extract_numeric_answer(text: str) -> str:
     Uses the same regex as the local GSM8K evaluator so that scoring is
     consistent across local and remote evaluation paths.
     """
-    match = _GSM8K_ANSWER_RE.search(text)
-    if match is None:
+    matches = _GSM8K_ANSWER_RE.findall(text)
+    if not matches:
         return ""
-    return _normalize_numeric(match.group(1))
+    return _normalize_numeric(matches[-1])
 
 logging.basicConfig(
     level=logging.INFO,
