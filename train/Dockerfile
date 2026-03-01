@@ -21,6 +21,8 @@ COPY src/ src/
 COPY config/ config/
 COPY scripts/train.py scripts/train.py
 COPY scripts/quick_test.py scripts/quick_test.py
+COPY scripts/evaluate.py scripts/evaluate.py
+COPY eval/run_benchmarks.py eval/run_benchmarks.py
 COPY data/examples/ data/examples/
 COPY runpod_startup.sh setup.py ./
 
