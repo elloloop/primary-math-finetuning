@@ -46,7 +46,37 @@ Network Volumes persist data across pods and allow the train, inference, and eva
 
 ---
 
-## Step 2: Train (GPU Pod)
+## Step 2: Upload Training Data
+
+The train image includes small example data at `data/examples/train.json`, but for real training you need to provide your own dataset. Three options:
+
+### Option A: Upload to Network Volume first (recommended)
+
+1. Create a lightweight **CPU pod** (cheapest available) and attach the `math-finetuning` network volume
+2. Use the RunPod web terminal or `rsync`/`scp` to upload your JSON/JSONL training data to `/workspace/data/`
+3. Terminate the upload pod
+4. Now launch the train pod with the same volume — your data is at `/workspace/data/`
+
+### Option B: Use HuggingFace datasets
+
+Set `--data_path` to a HuggingFace dataset identifier (e.g., `gsm8k`). No volume is needed for data input (only for outputs).
+
+```bash
+python scripts/train.py --data_path gsm8k --output_dir /workspace/outputs/models/run1
+```
+
+### Option C: Bake data into a custom image
+
+For reproducible runs, extend the train image with your data:
+
+```dockerfile
+FROM ghcr.io/elloloop/primary-math-finetuning/train:latest
+COPY my_data/ /workspace/data/
+```
+
+---
+
+## Step 3: Train (GPU Pod)
 
 ### Create a GPU Pod Template
 
@@ -89,8 +119,19 @@ python scripts/train.py \
 Or set the **Docker Command** in the template to run training automatically:
 
 ```
-python scripts/train.py --data_path data/examples/train.json --output_dir /workspace/outputs/models/run1
+python scripts/train.py --data_path /workspace/data/train.json --output_dir /workspace/outputs/models/run1
 ```
+
+#### Train + Eval in one pod
+
+The train image includes the GSM8K eval scripts. To run evaluation immediately after training (avoiding a separate eval pod), chain the commands:
+
+```
+bash -c "python scripts/train.py --data_path /workspace/data/train.json --output_dir /workspace/outputs/models/run1 && MODEL_PATH=/workspace/outputs/models/run1/final python eval/run_benchmarks.py"
+```
+
+Set this as the **Docker Command** in your pod template. If training fails, eval is skipped automatically.
+
 
 ### Training Output
 
@@ -109,7 +150,7 @@ Once training is done, **stop or terminate** the pod to stop billing. The networ
 
 ---
 
-## Step 3: Serve Inference (RunPod Serverless)
+## Step 4: Serve Inference (RunPod Serverless)
 
 RunPod Serverless auto-scales GPU workers based on request volume — ideal for serving the model in production.
 
@@ -191,7 +232,9 @@ curl -X POST http://<pod_ip>:8000/v1/completions \
 
 ---
 
-## Step 4: Evaluate (GPU Pod)
+## Step 5: Evaluate (GPU Pod, optional)
+
+> **Tip:** If you used the train + eval chaining command in Step 3, eval already ran on the same pod and you can skip this step. The standalone eval image is useful when you want to re-evaluate a model without retraining.
 
 ### Option A: Direct Model Loading
 
@@ -263,21 +306,21 @@ BENCHMARK RESULTS
 ```bash
 # 1. Create a network volume in RunPod Console (50 GB, same region as pods)
 
-# 2. Train — launch a GPU Pod
+# 2. Upload training data — launch a cheap CPU pod, upload to /workspace/data/, terminate
+
+# 3. Train + Eval — launch a GPU Pod
 #    Image: ghcr.io/elloloop/primary-math-finetuning/train:1.0.0
 #    GPU: A40 or A100
 #    Volume: math-finetuning -> /workspace
-#    Command: python scripts/train.py --data_path data/examples/train.json
+#    Command: bash -c "python scripts/train.py --data_path /workspace/data/train.json \
+#      --output_dir /workspace/outputs/models/run1 \
+#      && MODEL_PATH=/workspace/outputs/models/run1/final python eval/run_benchmarks.py"
 
-# 3. Serve — create a Serverless Endpoint
+# 4. Serve — create a Serverless Endpoint
 #    Image: ghcr.io/elloloop/primary-math-finetuning/inference:1.0.0
 #    Volume: math-finetuning -> /workspace
 #    Env: MODEL_PATH=Qwen/Qwen2.5-7B-Instruct LORA_PATH=/workspace/outputs/models/run1/final
 
-# 4. Evaluate — launch a GPU Pod (or CPU pod if using INFERENCE_URL)
-#    Image: ghcr.io/elloloop/primary-math-finetuning/eval:1.0.0
-#    Volume: math-finetuning -> /workspace
-#    Env: MODEL_PATH=/workspace/outputs/models/run1/final
 
 # 5. Check results
 #    cat /workspace/outputs/results/benchmark_results.json

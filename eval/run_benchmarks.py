@@ -17,9 +17,36 @@ Environment variables:
 import json
 import logging
 import os
+import re
 import sys
 import time
 from pathlib import Path
+
+_GSM8K_ANSWER_RE = re.compile(r"####\s*(-?\d[\d,]*\.?\d*)")
+
+
+def _normalize_numeric(s: str) -> str:
+    """Strip commas and trailing '.0' from a numeric string."""
+    s = s.replace(",", "").strip()
+    try:
+        n = float(s)
+        if n == int(n):
+            return str(int(n))
+        return str(n)
+    except ValueError:
+        return s
+
+
+def _extract_numeric_answer(text: str) -> str:
+    """Extract the final numeric answer after #### from *text*.
+
+    Uses the same regex as the local GSM8K evaluator so that scoring is
+    consistent across local and remote evaluation paths.
+    """
+    match = _GSM8K_ANSWER_RE.search(text)
+    if match is None:
+        return ""
+    return _normalize_numeric(match.group(1))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,7 +71,7 @@ def run_local_eval(model_path: str, lora_path: str, num_samples: int | None) -> 
     from src.evaluation.benchmark_runner import BenchmarkRunner
     from src.evaluation.analytics import print_summary
 
-    runner = BenchmarkRunner(model_path=model_path)
+    runner = BenchmarkRunner(model_path=model_path, lora_path=lora_path)
     logger.info("Running GSM8K evaluation (num_samples=%s)", num_samples)
     results = runner.run_gsm8k(num_samples=num_samples)
     print_summary(results)
@@ -84,11 +111,12 @@ def run_remote_eval(inference_url: str, num_samples: int | None) -> dict:
         for j, completion in enumerate(completions):
             answer_text = batch["answer"][j]
             # Extract the final numeric answer after ####
-            expected = answer_text.split("####")[-1].strip() if "####" in answer_text else ""
+            expected = _extract_numeric_answer(answer_text)
             generated = completion["text"]
 
-            # Try to extract a number from the generated text
-            is_correct = expected != "" and expected in generated
+            # Extract numeric answer using the same #### pattern as the local evaluator
+            predicted = _extract_numeric_answer(generated)
+            is_correct = expected != "" and predicted == expected
             correct += int(is_correct)
             predictions.append(
                 {
