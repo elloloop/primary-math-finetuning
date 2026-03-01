@@ -13,19 +13,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 # Install Python deps first (cached unless requirements change)
-# torch is already in the base image — don't reinstall
-COPY requirements-docker.txt .
-RUN pip install --no-cache-dir -r requirements-docker.txt
+COPY eval/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
-# Copy source code (changes frequently — keep last)
-COPY config/ config/
+# Copy source code
 COPY src/ src/
-COPY scripts/ scripts/
+COPY config/ config/
+COPY scripts/evaluate.py scripts/evaluate.py
+COPY eval/run_benchmarks.py eval/run_benchmarks.py
 COPY data/examples/ data/examples/
-COPY runpod_startup.sh setup.py ./
+COPY setup.py ./
 
-RUN chmod +x runpod_startup.sh
+RUN pip install --no-cache-dir -e .
 
-EXPOSE 6006 8888
-ENTRYPOINT ["bash", "runpod_startup.sh"]
-CMD ["python", "scripts/quick_test.py"]
+ENTRYPOINT ["python", "eval/run_benchmarks.py"]

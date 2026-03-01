@@ -4,13 +4,7 @@ accelerate==0.34.0
 trl==0.11.0
 bitsandbytes==0.44.0
 datasets==2.16.0
-evaluate==0.4.1
-lm-eval==0.4.2
-pandas==2.1.4
-numpy==1.24.3
-jsonlines==4.0.0
 tensorboard==2.15.1
 wandb==0.16.1
-matplotlib==3.8.2
-seaborn==0.13.0
+jsonlines==4.0.0
 jsonschema==4.21.1

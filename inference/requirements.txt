@@ -1,0 +1,4 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+vllm>=0.6.0
+peft==0.13.0

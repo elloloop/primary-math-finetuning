@@ -5,16 +5,28 @@ on:
     types: [published]
 
 env:
-  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ${{ github.repository }}
 
 jobs:
-  publish-image:
+  build-images:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        image:
+          - name: train
+            dockerfile: train/Dockerfile
+          - name: inference
+            dockerfile: inference/Dockerfile
+          - name: eval
+            dockerfile: eval/Dockerfile
     outputs:
-      image_url: ${{ steps.summary.outputs.image_url }}
+      train_url: ${{ steps.summary.outputs.train_url }}
+      inference_url: ${{ steps.summary.outputs.inference_url }}
+      eval_url: ${{ steps.summary.outputs.eval_url }}
 
     steps:
       - name: Checkout
@@ -47,7 +59,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_BASE }}/${{ matrix.image.name }}
           tags: |
             type=semver,pattern={{version}},value=${{ steps.version.outputs.tag }}
             type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.tag }}
@@ -59,18 +71,20 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ${{ matrix.image.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
           build-args: BUILDKIT_INLINE_CACHE=1
 
       - name: Make package public
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PACKAGE_NAME=$(echo "$IMAGE_NAME" | cut -d'/' -f2)
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          PACKAGE_NAME="${REPO_NAME}/${{ matrix.image.name }}"
           gh api \
             --method PUT \
             -H "Accept: application/vnd.github+json" \
@@ -86,6 +100,6 @@ jobs:
       - name: Output image URL
         id: summary
         run: |
-          IMAGE_URL="ghcr.io/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}"
-          echo "image_url=${IMAGE_URL}" >> "$GITHUB_OUTPUT"
+          IMAGE_URL="${{ env.REGISTRY }}/${{ env.IMAGE_BASE }}/${{ matrix.image.name }}:${{ steps.version.outputs.version }}"
+          echo "${{ matrix.image.name }}_url=${IMAGE_URL}" >> "$GITHUB_OUTPUT"
           echo "Image URL: ${IMAGE_URL}"
