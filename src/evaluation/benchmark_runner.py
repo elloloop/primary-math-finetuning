@@ -24,9 +24,12 @@ class BenchmarkRunner:
     Args:
         model_path: Path or Hugging Face Hub identifier for the model to
             evaluate.
+        lora_path: Optional path to a LoRA adapter directory. When provided
+            the base model is loaded from *model_path* and the adapter is
+            applied on top via PEFT.
     """
 
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path: str, lora_path: str = "") -> None:
         self.model_path = model_path
 
         logger.info("Loading tokenizer from %s", model_path)
@@ -38,6 +41,13 @@ class BenchmarkRunner:
             torch_dtype=torch.float16,
             device_map="auto",
         )
+
+        if lora_path:
+            from peft import PeftModel
+
+            logger.info("Applying LoRA adapter from %s", lora_path)
+            self.model = PeftModel.from_pretrained(self.model, lora_path)
+
         self.model.eval()
 
     def run_gsm8k(
