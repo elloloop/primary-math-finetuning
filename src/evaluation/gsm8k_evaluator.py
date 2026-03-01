@@ -157,10 +157,10 @@ class GSM8KEvaluator(BaseEvaluator):
             The extracted numeric answer as a string, or ``None`` if the
             ``####`` marker is not found.
         """
-        match = self._GSM8K_ANSWER_PATTERN.search(text)
-        if match is None:
+        matches = self._GSM8K_ANSWER_PATTERN.findall(text)
+        if not matches:
             return None
-        raw = match.group(1).replace(",", "")
+        raw = matches[-1].replace(",", "")
         return self._normalize_answer(raw)
 
     def evaluate(
