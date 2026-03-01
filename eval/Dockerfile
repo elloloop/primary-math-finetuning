@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+WORKDIR /app
 
 # Install Python deps first (cached unless requirements change)
 COPY eval/requirements.txt /tmp/requirements.txt
