@@ -132,6 +132,7 @@ bash -c "python scripts/train.py --data_path /workspace/data/train.json --output
 
 Set this as the **Docker Command** in your pod template. If training fails, eval is skipped automatically.
 
+
 ### Training Output
 
 After training completes, the network volume will contain:
@@ -319,6 +320,7 @@ BENCHMARK RESULTS
 #    Image: ghcr.io/elloloop/primary-math-finetuning/inference:1.0.0
 #    Volume: math-finetuning -> /workspace
 #    Env: MODEL_PATH=Qwen/Qwen2.5-7B-Instruct LORA_PATH=/workspace/outputs/models/run1/final
+
 
 # 5. Check results
 #    cat /workspace/outputs/results/benchmark_results.json
