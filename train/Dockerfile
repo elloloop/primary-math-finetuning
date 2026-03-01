@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+WORKDIR /app
 
 # Install Python deps first (cached unless requirements change)
 COPY train/requirements.txt /tmp/requirements.txt
@@ -30,5 +30,5 @@ RUN pip install --no-cache-dir -e . && chmod +x runpod_startup.sh
 
 EXPOSE 6006
 
-ENTRYPOINT ["bash", "runpod_startup.sh"]
+ENTRYPOINT ["bash", "/app/runpod_startup.sh"]
 CMD ["python", "scripts/quick_test.py"]
