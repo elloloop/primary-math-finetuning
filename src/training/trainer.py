@@ -172,10 +172,25 @@ class MathTrainer:
         logger.info("Loaded %d raw samples", len(ds))
 
         # Format each sample into ChatML text
-        def _format(example):
-            return format_for_training(example)
+        # If the data already uses the 'messages' format (list of role/content dicts),
+        # convert it directly to ChatML text. Otherwise use format_for_training.
+        if "messages" in ds.column_names:
 
-        ds = ds.map(_format, remove_columns=ds.column_names)
+            def _format_messages(example):
+                parts = []
+                for msg in example["messages"]:
+                    parts.append(
+                        f"<|im_start|>{msg['role']}\n{msg['content']}<|im_end|>"
+                    )
+                return {"text": "\n".join(parts)}
+
+            ds = ds.map(_format_messages, remove_columns=ds.column_names)
+        else:
+
+            def _format(example):
+                return format_for_training(example)
+
+            ds = ds.map(_format, remove_columns=ds.column_names)
 
         if len(ds) == 0:
             raise ValueError("Dataset is empty after formatting")

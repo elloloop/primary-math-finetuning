@@ -13,32 +13,60 @@ def launch_pod():
     api_key = os.environ["RUNPOD_API_KEY"]
     hf_token = os.environ.get("HF_TOKEN", "")
     wandb_key = os.environ.get("WANDB_API_KEY", "")
-    max_iterations = os.environ.get("MAX_ITERATIONS", "10")
-    gpu_type = os.environ.get("GPU_TYPE", "NVIDIA RTX A5000")
+    git_ssh_key = os.environ.get("GIT_SSH_KEY", "")
+    experiment = os.environ.get("EXPERIMENT", "default")
+    gpu_type = os.environ.get("GPU_TYPE", "NVIDIA A40")
     cloud_type = os.environ.get("CLOUD_TYPE", "COMMUNITY")
+    volume_id = os.environ.get("RUNPOD_VOLUME_ID", "")
+    data_repo_url = os.environ.get(
+        "DATA_REPO_URL", "git@github.com:elloloop/maths-questions-database.git"
+    )
     image_name = os.environ.get("IMAGE_NAME", "elloloop/primary-math-finetuning")
     registry = os.environ.get("REGISTRY", "ghcr.io")
 
-    docker_image = f"{registry}/{image_name}:latest"
+    docker_image = f"{registry}/{image_name}/train:latest"
+
+    # Build env vars list, escaping values for GraphQL string interpolation
+    env_vars = [
+        ("HF_TOKEN", hf_token),
+        ("WANDB_API_KEY", wandb_key),
+        ("EXPERIMENT", experiment),
+        ("DATA_REPO_URL", data_repo_url),
+        ("START_TENSORBOARD", "true"),
+        ("KEEP_ALIVE", "true"),
+    ]
+    if git_ssh_key:
+        env_vars.append(("GIT_SSH_KEY", git_ssh_key))
+
+    env_entries = ", ".join(
+        '{{ key: "{k}", value: "{v}" }}'.format(
+            k=k, v=v.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+        )
+        for k, v in env_vars
+    )
+
+    # Use a persistent network volume if provided, otherwise ephemeral
+    volume_clause = ""
+    if volume_id:
+        volume_clause = f'networkVolumeId: "{volume_id}"'
+    else:
+        volume_clause = "volumeInGb: 50"
 
     query = """
     mutation {{
       podFindAndDeployOnDemand(
         input: {{
-          name: "primary-math-finetuning"
+          name: "math-finetune-{experiment}"
           imageName: "{image}"
           gpuTypeId: "{gpu_type}"
           cloudType: {cloud_type}
-          volumeInGb: 50
+          {volume_clause}
           containerDiskInGb: 20
           minVcpuCount: 4
           minMemoryInGb: 16
           gpuCount: 1
-          env: [
-            {{ key: "HF_TOKEN", value: "{hf_token}" }},
-            {{ key: "WANDB_API_KEY", value: "{wandb_key}" }},
-            {{ key: "MAX_ITERATIONS", value: "{max_iterations}" }}
-          ]
+          ports: "22/tcp,6006/http"
+          env: [{env_entries}]
         }}
       ) {{
         id
@@ -51,9 +79,9 @@ def launch_pod():
         image=docker_image,
         gpu_type=gpu_type,
         cloud_type=cloud_type,
-        hf_token=hf_token,
-        wandb_key=wandb_key,
-        max_iterations=max_iterations,
+        volume_clause=volume_clause,
+        env_entries=env_entries,
+        experiment=experiment,
     )
 
     headers = {
