@@ -1,11 +1,11 @@
 name: Train on RunPod
 
 on:
-  workflow_run:
-    workflows: ["Release"]
-    types: [completed]
   workflow_dispatch:
     inputs:
+      experiment:
+        description: "Experiment name (used as output subfolder, e.g. 'baseline-v1')"
+        required: true
       max_iterations:
         description: "Maximum training iterations to reach target accuracy"
         required: false
@@ -26,7 +26,6 @@ env:
 jobs:
   train:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
       contents: read
@@ -49,6 +48,9 @@ jobs:
           RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+          GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
+          RUNPOD_VOLUME_ID: ${{ secrets.RUNPOD_VOLUME_ID }}
+          EXPERIMENT: ${{ inputs.experiment }}
           MAX_ITERATIONS: ${{ inputs.max_iterations || '10' }}
           GPU_TYPE: ${{ inputs.gpu_type || 'NVIDIA A40' }}
           CLOUD_TYPE: ${{ inputs.cloud_type || 'COMMUNITY' }}

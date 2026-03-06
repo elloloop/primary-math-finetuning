@@ -30,5 +30,7 @@ RUN pip install --no-cache-dir -e . && chmod +x runpod_startup.sh
 
 EXPOSE 6006
 
+ENV EXPERIMENT=default
+
 ENTRYPOINT ["bash", "/app/runpod_startup.sh"]
-CMD ["python", "scripts/quick_test.py"]
+CMD ["bash", "-c", "python scripts/train.py --data_path /workspace/data/maths-questions-database/public/qwen_finetune_dataset.jsonl --output_dir /workspace/outputs/models/${EXPERIMENT}"]

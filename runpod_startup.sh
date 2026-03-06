@@ -61,11 +61,15 @@ PYEOF
 # ---------------------------------------------------------------------------
 # Workspace directories
 # ---------------------------------------------------------------------------
+EXPERIMENT="${EXPERIMENT:-default}"
+export EXPERIMENT
+log "Experiment: $EXPERIMENT"
+
 log "Creating workspace directories..."
 mkdir -p /workspace/data \
-         /workspace/outputs/models \
-         /workspace/outputs/logs \
-         /workspace/outputs/results \
+         /workspace/outputs/models/"$EXPERIMENT" \
+         /workspace/outputs/logs/"$EXPERIMENT" \
+         /workspace/outputs/results/"$EXPERIMENT" \
          /workspace/outputs/visualizations \
          /workspace/cache
 
@@ -78,13 +82,39 @@ log "TRANSFORMERS_CACHE=$TRANSFORMERS_CACHE"
 log "HF_HOME=$HF_HOME"
 
 # ---------------------------------------------------------------------------
+# Clone training data repo (skip if already present on the volume)
+# ---------------------------------------------------------------------------
+DATA_REPO_URL="${DATA_REPO_URL:-git@github.com:elloloop/maths-questions-database.git}"
+DATA_DIR="/workspace/data/maths-questions-database"
+
+if [[ -d "$DATA_DIR/.git" ]]; then
+    log "Training data already present at $DATA_DIR, pulling latest..."
+    git -C "$DATA_DIR" pull --ff-only || log "WARNING: git pull failed, using existing data"
+elif [[ -n "${GIT_SSH_KEY:-}" ]]; then
+    log "Cloning training data from $DATA_REPO_URL..."
+    mkdir -p ~/.ssh
+    echo "$GIT_SSH_KEY" > ~/.ssh/id_ed25519
+    chmod 600 ~/.ssh/id_ed25519
+    ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+
+    git clone --depth 1 "$DATA_REPO_URL" "$DATA_DIR" \
+        && log "Training data cloned to $DATA_DIR" \
+        || error_exit "Failed to clone training data repo"
+
+    rm -f ~/.ssh/id_ed25519
+    log "SSH key cleaned up."
+else
+    log "WARNING: No GIT_SSH_KEY set and no cached data found. Training data unavailable."
+fi
+
+# ---------------------------------------------------------------------------
 # TensorBoard (optional)
 # ---------------------------------------------------------------------------
 if [[ "${START_TENSORBOARD:-false}" == "true" ]]; then
     log "Starting TensorBoard on port 6006..."
     if command -v tensorboard &>/dev/null; then
         tensorboard \
-            --logdir /workspace/outputs/logs \
+            --logdir /workspace/outputs/logs/"$EXPERIMENT" \
             --host 0.0.0.0 \
             --port 6006 \
             --reload_interval 30 &
