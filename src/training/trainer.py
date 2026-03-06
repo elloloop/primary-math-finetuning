@@ -175,6 +175,7 @@ class MathTrainer:
         # If the data already uses the 'messages' format (list of role/content dicts),
         # convert it directly to ChatML text. Otherwise use format_for_training.
         if "messages" in ds.column_names:
+
             def _format_messages(example):
                 parts = []
                 for msg in example["messages"]:
@@ -185,6 +186,7 @@ class MathTrainer:
 
             ds = ds.map(_format_messages, remove_columns=ds.column_names)
         else:
+
             def _format(example):
                 return format_for_training(example)
 
