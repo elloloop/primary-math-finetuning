@@ -1,4 +1,7 @@
-"""Launch a RunPod GPU pod to run fine-tuning with the GHCR Docker image."""
+"""Resume an existing RunPod pod for fine-tuning.
+
+If RUNPOD_POD_ID is set, resumes that pod. Otherwise creates a new one.
+"""
 
 import json
 import os
@@ -9,7 +12,47 @@ import requests
 RUNPOD_API_URL = "https://api.runpod.io/graphql"
 
 
-def launch_pod():
+def graphql(api_key: str, query: str) -> dict:
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+    response = requests.post(
+        RUNPOD_API_URL, json={"query": query}, headers=headers, timeout=60
+    )
+    response.raise_for_status()
+    result = response.json()
+    if "errors" in result:
+        print(f"RunPod API errors: {json.dumps(result['errors'], indent=2)}")
+        sys.exit(1)
+    return result
+
+
+def resume_pod(api_key: str, pod_id: str):
+    """Resume a stopped/exited pod."""
+    query = """
+    mutation {{
+      podResume(
+        input: {{
+          podId: "{pod_id}"
+          gpuCount: 1
+        }}
+      ) {{
+        id
+        desiredStatus
+      }}
+    }}
+    """.format(pod_id=pod_id)
+
+    result = graphql(api_key, query)
+    pod = result["data"]["podResume"]
+    print(f"Pod resumed: {pod['id']}")
+    print(f"Status: {pod['desiredStatus']}")
+    return pod["id"]
+
+
+def create_pod():
+    """Create a new pod (fallback if no pod ID is set)."""
     api_key = os.environ["RUNPOD_API_KEY"]
     hf_token = os.environ.get("HF_TOKEN", "")
     wandb_key = os.environ.get("WANDB_API_KEY", "")
@@ -26,7 +69,6 @@ def launch_pod():
 
     docker_image = f"{registry}/{image_name}/train:latest"
 
-    # Build env vars list, escaping values for GraphQL string interpolation
     env_vars = [
         ("HF_TOKEN", hf_token),
         ("WANDB_API_KEY", wandb_key),
@@ -45,12 +87,9 @@ def launch_pod():
         for k, v in env_vars
     )
 
-    # Use a persistent network volume if provided, otherwise ephemeral
-    volume_clause = ""
-    if volume_id:
-        volume_clause = f'networkVolumeId: "{volume_id}"'
-    else:
-        volume_clause = "volumeInGb: 50"
+    volume_clause = (
+        f'networkVolumeId: "{volume_id}"' if volume_id else "volumeInGb: 50"
+    )
 
     query = """
     mutation {{
@@ -84,37 +123,35 @@ def launch_pod():
         experiment=experiment,
     )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}",
-    }
-
-    response = requests.post(
-        RUNPOD_API_URL, json={"query": query}, headers=headers, timeout=60
-    )
-    response.raise_for_status()
-    result = response.json()
-
-    if "errors" in result:
-        print(f"RunPod API errors: {json.dumps(result['errors'], indent=2)}")
-        sys.exit(1)
-
+    result = graphql(api_key, query)
     pod = result["data"]["podFindAndDeployOnDemand"]
     pod_id = pod["id"]
-    print(f"Pod launched: {pod_id} ({pod['name']})")
+    print(f"Pod created: {pod_id} ({pod['name']})")
     print(f"Image: {pod['imageName']}")
     print(f"Status: {pod['desiredStatus']}")
+    return pod_id
 
-    # Save pod ID for polling step
+
+def main():
+    api_key = os.environ["RUNPOD_API_KEY"]
+    pod_id = os.environ.get("RUNPOD_POD_ID", "")
+
+    if pod_id:
+        print(f"Resuming existing pod {pod_id}...")
+        pod_id = resume_pod(api_key, pod_id)
+    else:
+        print("No RUNPOD_POD_ID set, creating new pod...")
+        pod_id = create_pod()
+
+    # Save pod ID for downstream steps
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a") as f:
             f.write(f"pod_id={pod_id}\n")
 
-    # Also write to a file for the poll script
     with open("pod_id.txt", "w") as f:
         f.write(pod_id)
 
 
 if __name__ == "__main__":
-    launch_pod()
+    main()
