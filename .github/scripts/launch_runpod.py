@@ -15,7 +15,6 @@ def launch_pod():
     wandb_key = os.environ.get("WANDB_API_KEY", "")
     git_ssh_key = os.environ.get("GIT_SSH_KEY", "")
     experiment = os.environ.get("EXPERIMENT", "default")
-    max_iterations = os.environ.get("MAX_ITERATIONS", "10")
     gpu_type = os.environ.get("GPU_TYPE", "NVIDIA A40")
     cloud_type = os.environ.get("CLOUD_TYPE", "COMMUNITY")
     volume_id = os.environ.get("RUNPOD_VOLUME_ID", "")
@@ -31,10 +30,10 @@ def launch_pod():
     env_vars = [
         ("HF_TOKEN", hf_token),
         ("WANDB_API_KEY", wandb_key),
-        ("MAX_ITERATIONS", max_iterations),
         ("EXPERIMENT", experiment),
         ("DATA_REPO_URL", data_repo_url),
         ("START_TENSORBOARD", "true"),
+        ("KEEP_ALIVE", "true"),
     ]
     if git_ssh_key:
         env_vars.append(("GIT_SSH_KEY", git_ssh_key))
@@ -66,6 +65,7 @@ def launch_pod():
           minVcpuCount: 4
           minMemoryInGb: 16
           gpuCount: 1
+          ports: "22/tcp,6006/http"
           env: [{env_entries}]
         }}
       ) {{

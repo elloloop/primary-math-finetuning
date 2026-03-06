@@ -6,10 +6,6 @@ on:
       experiment:
         description: "Experiment name (used as output subfolder, e.g. 'baseline-v1')"
         required: true
-      max_iterations:
-        description: "Maximum training iterations to reach target accuracy"
-        required: false
-        default: "10"
       gpu_type:
         description: "RunPod GPU type"
         required: false
@@ -24,7 +20,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  train:
+  deploy:
     runs-on: ubuntu-latest
 
     permissions:
@@ -40,8 +36,8 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install RunPod CLI dependencies
-        run: pip install runpod requests
+      - name: Install dependencies
+        run: pip install requests
 
       - name: Launch RunPod training pod
         env:
@@ -51,13 +47,6 @@ jobs:
           GIT_SSH_KEY: ${{ secrets.GIT_SSH_KEY }}
           RUNPOD_VOLUME_ID: ${{ secrets.RUNPOD_VOLUME_ID }}
           EXPERIMENT: ${{ inputs.experiment }}
-          MAX_ITERATIONS: ${{ inputs.max_iterations || '10' }}
           GPU_TYPE: ${{ inputs.gpu_type || 'NVIDIA A40' }}
           CLOUD_TYPE: ${{ inputs.cloud_type || 'COMMUNITY' }}
         run: python .github/scripts/launch_runpod.py
-
-      - name: Wait for training to complete
-        env:
-          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
-        run: python .github/scripts/poll_runpod.py
-        timeout-minutes: 360

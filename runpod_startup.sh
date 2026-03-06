@@ -126,12 +126,39 @@ if [[ "${START_TENSORBOARD:-false}" == "true" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Execute CMD or fall back to bash
+# SSH server (enables RunPod web terminal and SSH access)
+# ---------------------------------------------------------------------------
+if command -v sshd &>/dev/null; then
+    mkdir -p /var/run/sshd
+    # Allow root login for RunPod web terminal
+    sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config 2>/dev/null || true
+    sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config 2>/dev/null || true
+    # Set a default root password if PUBLIC_KEY is not set
+    if [[ -z "${PUBLIC_KEY:-}" ]]; then
+        echo "root:runpod" | chpasswd 2>/dev/null || true
+    fi
+    /usr/sbin/sshd 2>/dev/null || log "WARNING: Failed to start sshd"
+    log "SSH server started on port 22."
+fi
+
+# ---------------------------------------------------------------------------
+# Execute CMD, then optionally keep alive for interactive access
 # ---------------------------------------------------------------------------
 if [[ $# -gt 0 ]]; then
     log "Executing CMD: $*"
-    exec "$@"
+    "$@"
+    CMD_EXIT=$?
+    log "CMD exited with code $CMD_EXIT"
 else
-    log "No CMD provided. Dropping into bash."
-    exec /bin/bash
+    log "No CMD provided."
+    CMD_EXIT=0
+fi
+
+# Keep the pod alive for interactive debugging/inspection
+if [[ "${KEEP_ALIVE:-true}" == "true" ]]; then
+    log "KEEP_ALIVE=true — pod will stay running. Connect via RunPod web terminal or SSH."
+    log "To stop the pod, terminate it from the RunPod dashboard."
+    sleep infinity
+else
+    exit $CMD_EXIT
 fi
