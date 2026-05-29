@@ -26,6 +26,7 @@ class BaseEvaluator(ABC):
     # generated text. Earlier patterns take priority.
     ANSWER_PATTERNS: list[re.Pattern[str]] = [
         re.compile(r"####\s*(-?\d[\d,]*\.?\d*)", re.IGNORECASE),
+        re.compile(r"Answer:\s*(-?\d[\d,]*\.?\d*)", re.IGNORECASE),
         re.compile(r"(?:the\s+)?answer\s+is\s*:?\s*([A-Da-d])\b", re.IGNORECASE),
         re.compile(r"correct\s+answer\s+is\s*:?\s*([A-Da-d])\b", re.IGNORECASE),
         re.compile(r"^\s*([A-Da-d])\)", re.MULTILINE),
